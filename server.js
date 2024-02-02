@@ -1,10 +1,7 @@
 const inquire = require("inquirer");
 const db = require("./db/connection");
+const { response } = require("express");
 
-function quit() {
-  console.log("guess i am not doing anything today");
-  process.exit();
-}
 
 const start = () => {
   inquire
@@ -29,33 +26,33 @@ const start = () => {
       ],
     })
     .then((res) => {
-      let selection = res.selection;
+      let selection = res.choices;
       // function to query fro all employees and log the table
       switch (selection) {
         case `VIEW_EMPLOYEES`:
-          getAllEmployees();
+          getAllEmployees().then(() => start());
           break;
         case `VIEW_ROLES`:
-          getAllRoles();
+          getAllRoles().then(() => start());
           break;
         case `VIEW_DEPARTMENT`:
-          getAllDepartments();
+          getAllDepartments().then(() => start());
           break;
         case `ADD_EMPLOYEE`:
-          getAddEmployee();
+          addEmployee().then(() => start());
           break;
         case `CHANGE_ROLE`:
-          getChangeRole();
+          changeRole().then(() => start());a
           break;
         case `ADD_DEPARTMENT`:
-          getAddDepartment();
+          addDepartment().then(() => start());
           break;
         case `ADD_ROLE`:
-          getAddRole();
+          addRole().then(() => start());
           break;
 
         default:
-          quit();
+       
       }
     });
 };
@@ -64,9 +61,8 @@ const start = () => {
 function getAllEmployees() {
   db.query(`SELECT * from employee`, (err, results) => {
     if (err) throw err;
-    console.table(results);
+    console.table(results);  
   
-    start();
 });
 }
 
@@ -74,7 +70,7 @@ function getAllRoles() {
   db.query(`SELECT * from role`, (err, results) => {
     if (err) throw err;
     console.table(results);
-    start();
+  
   });
 }
 
@@ -82,8 +78,61 @@ function getAllDepartments() {
   db.query(`SELECT * from department`, (err, results) => {
     if (err) throw err;
     console.table(results);
-    start();
+  
   });
 }
+
+function addDepartment() {
+  inquire
+    .prompt([
+      {
+        name: "newDepartment",
+        type: "input",
+        message: "What do you want to call this department?",
+      },
+    ])
+    .then((userResponse) => {
+      db.query(
+        `INSERT into department SET ?`,
+        {
+          name: userResponse.newDepartment,
+        },
+        (err,) => {
+          if (err) throw err;
+          console.log(`\n ${userResponse.newDepartment} successfully added to database! \n`);
+
+          prompt();
+        }
+      );
+    });
+}
+
+
+function addRole() {
+  inquire
+    .prompt([
+      {
+        name: "newRole",
+        type: "input",
+        message: "What do you want to call the new role?",
+      },
+    ])
+    .then((userResponse) => {
+      db.query(
+        `INSERT into role SET ?`,
+        {
+          title: userResponse.newRole,
+        },
+        (err,) => {
+          if (err) throw err;
+          console.log(`\n ${userResponse.newRole} successfully added to database! \n`);
+
+          prompt();
+        }
+      );
+    });
+}
+
+
 
 start();
