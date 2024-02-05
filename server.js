@@ -1,13 +1,28 @@
 const inquirer = require("inquirer");
-const db = require("./db/connection.js");
-//const { response } = require("express");
+//const db = require("./db/connection.js");
 
+//universal variables
+require("dotenv").config();
 
-const start = () => {
+// mysql config goes here
+// mysql connection location
+const mysql = require("mysql2");
+const db = mysql.createConnection(
+    {
+      host: "localhost",
+      // MySQL username,
+      user: process.env.DB_USER,
+      // MySQL password
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    },
+    console.log("Congrats you have succsesfully connected!")
+  );
+const startApp = () => {
   inquirer
-    .prompt({
+    .prompt([{
       type: "rawlist",
-      name: "selection",
+      name: "choices",
       message: "What would you like to do today?",
       choices: [
         {
@@ -24,31 +39,32 @@ const start = () => {
         { name: "Did you need to add a departmen?", value: "ADD_DEPARTMENT" },
         { name: "Do you need to add a role?", value: "ADD_ROLE" },
       ],
-    })
+    },
+  ])
     .then((res) => {
-      let selection = res.selection;
+      let selection = res.choices;
       // function to query fro all employees and log the table
       switch (selection) {
         case `VIEW_EMPLOYEES`:
-          getAllEmployees().then(() => start());
+          getAllEmployees();
           break;
         case `VIEW_ROLES`:
-          getAllRoles().then(() => start());
+          getAllRoles();
           break;
         case `VIEW_DEPARTMENT`:
-          getAllDepartments().then(() => start());
+          getAllDepartments();
           break;
         case `ADD_EMPLOYEE`:
-          addEmployee().then(() => start());
+          addEmployee();
           break;
         case `CHANGE_ROLE`:
-          changeRole().then(() => start());
+          changeRole();
           break;
         case `ADD_DEPARTMENT`:
-          addDepartment().then(() => start());
+          addDepartment();
           break;
         case `ADD_ROLE`:
-          addRole().then(() => start());
+          addRole();
           break;
 
         default:
@@ -62,7 +78,7 @@ function getAllEmployees() {
   db.query(`SELECT * from employee`, (err, results) => {
     if (err) throw err;
     console.table(results);  
-  
+  startApp();
 });
 }
 
@@ -70,7 +86,7 @@ function getAllRoles() {
   db.query(`SELECT * from role`, (err, results) => {
     if (err) throw err;
     console.table(results);
-  
+  startApp();
   });
 }
 
@@ -78,13 +94,13 @@ function getAllDepartments() {
   db.query(`SELECT * from department`, (err, results) => {
     if (err) throw err;
     console.table(results);
-  
+    startApp();
   });
 }
 
 function addDepartment() {
   inquirer
-    .start([
+    .prompt([
       {
         name: "newDepartment",
         type: "input",
@@ -97,11 +113,10 @@ function addDepartment() {
         {
           name: userResponse.newDepartment,
         },
-        (err,) => {
+        (err) => {
           if (err) throw err;
           console.log(`\n ${userResponse.newDepartment} successfully added to database! \n`);
-
-          start();
+          startApp();
         }
       );
     });
@@ -112,7 +127,7 @@ addRole = () => {
   db.query(`SELECT * FROM department;`, (err, res) => {
       if (err) throw err;
       let departments = res.map(department => ({name: department.name, value: department.id }));
-      inquirer.start([
+      inquirer.prompt([
           {
           name: 'title',
           type: 'input',
@@ -139,21 +154,21 @@ addRole = () => {
           (err, res) => {
               if (err) throw err;
               console.log(`\n ${response.title} successfully added to database! \n`);
-             start();
+              startApp();
           })
       })
   })
 };
 function addEmployee() {
   inquirer
-    .start([
+    .prompt([
       {
         name: "newFirstName",
         type: "input",
         message: "What is the first name of the new employee?"
       },
       {
-        name: "newLasttName",
+        name: "newLastName",
         type: "input",
         message: "What is the last name of the new employee?"
       },
@@ -181,12 +196,11 @@ function addEmployee() {
         (err,) => {
           if (err) throw err;
           console.log(`\n ${userResponse.newFirstName} successfully added to database! \n`);
-
-          start();
+          startApp();
         }
       );
     });
 }
 
 
-start();
+startApp();
