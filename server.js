@@ -1,10 +1,10 @@
-const inquire = require("inquirer");
-const db = require("./db/connection");
-const { response } = require("express");
+const inquirer = require("inquirer");
+const db = require("./db/connection.js");
+//const { response } = require("express");
 
 
 const start = () => {
-  inquire
+  inquirer
     .prompt({
       type: "rawlist",
       name: "selection",
@@ -26,7 +26,7 @@ const start = () => {
       ],
     })
     .then((res) => {
-      let selection = res.choices;
+      let selection = res.selection;
       // function to query fro all employees and log the table
       switch (selection) {
         case `VIEW_EMPLOYEES`:
@@ -42,7 +42,7 @@ const start = () => {
           addEmployee().then(() => start());
           break;
         case `CHANGE_ROLE`:
-          changeRole().then(() => start());a
+          changeRole().then(() => start());
           break;
         case `ADD_DEPARTMENT`:
           addDepartment().then(() => start());
@@ -83,8 +83,8 @@ function getAllDepartments() {
 }
 
 function addDepartment() {
-  inquire
-    .prompt([
+  inquirer
+    .start([
       {
         name: "newDepartment",
         type: "input",
@@ -101,38 +101,92 @@ function addDepartment() {
           if (err) throw err;
           console.log(`\n ${userResponse.newDepartment} successfully added to database! \n`);
 
-          prompt();
+          start();
         }
       );
     });
 }
 
 
-function addRole() {
-  inquire
-    .prompt([
+addRole = () => {
+  db.query(`SELECT * FROM department;`, (err, res) => {
+      if (err) throw err;
+      let departments = res.map(department => ({name: department.name, value: department.id }));
+      inquirer.start([
+          {
+          name: 'title',
+          type: 'input',
+          message: 'What is the name of the role you want to add?'
+          },
+          {
+          name: 'salary',
+          type: 'input',
+          message: 'What is the salary of the role you want to add?'
+          },
+          {
+          name: 'departmentName',
+          type: 'rawlist',
+          message: 'Which department do you want to add the new role to?',
+          choices: departments
+          },
+      ]).then((response) => {
+          db.query(`INSERT INTO role SET ?`, 
+          {
+              title: response.title,
+              salary: response.salary,
+              department_id: response.departmentName,
+          },
+          (err, res) => {
+              if (err) throw err;
+              console.log(`\n ${response.title} successfully added to database! \n`);
+             start();
+          })
+      })
+  })
+};
+function addEmployee() {
+  inquirer
+    .start([
       {
-        name: "newRole",
+        name: "newFirstName",
         type: "input",
-        message: "What do you want to call the new role?",
+        message: "What is the first name of the new employee?"
       },
+      {
+        name: "newLasttName",
+        type: "input",
+        message: "What is the last name of the new employee?"
+      },
+      {
+        name: "newRoleId",
+        type: "input",
+        message: "What role are they in?(number)",
+      },
+      {
+      name: "newManagerId",
+      type: "input",
+      message: "Who is their manager?(manager id number)",
+      },
+      
     ])
     .then((userResponse) => {
       db.query(
-        `INSERT into role SET ?`,
+        `INSERT into employee SET ?`,
         {
-          title: userResponse.newRole,
+          first_name: userResponse.newFirstName,
+          last_name: userResponse.newLastName,
+          role_id: userResponse.newRoleId,
+          manager_id: userResponse.newManagerId
         },
         (err,) => {
           if (err) throw err;
-          console.log(`\n ${userResponse.newRole} successfully added to database! \n`);
+          console.log(`\n ${userResponse.newFirstName} successfully added to database! \n`);
 
-          prompt();
+          start();
         }
       );
     });
 }
-
 
 
 start();
