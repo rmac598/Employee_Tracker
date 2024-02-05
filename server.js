@@ -111,7 +111,7 @@ function addDepartment() {
       db.query(
         `INSERT into department SET ?`,
         {
-          name: userResponse.newDepartment,
+          department_name: userResponse.newDepartment,
         },
         (err) => {
           if (err) throw err;
